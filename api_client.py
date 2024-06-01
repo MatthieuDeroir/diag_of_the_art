@@ -1,9 +1,9 @@
 import httpx
 import asyncio
 import json
-import logging
+# import logging
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 async def get_response_from_mistral_stream(api_key, api_url, messages, prompt, preprompt):
     headers = {
@@ -36,14 +36,18 @@ async def get_response_from_mistral_stream(api_key, api_url, messages, prompt, p
                         # Incomplete JSON data, continue accumulating
                         continue
     except httpx.RequestError as exc:
-        logging.error(f"An error occurred while requesting {exc.request.url!r}.")
-        logging.error(exc)
+        # logging.error(f"An error occurred while requesting {exc.request.url!r}.")
+        # logging.error(exc)
         raise
-    except httpx.HTTPStatusError as exc:
-        logging.error(f"Error response {exc.response.status_code} while requesting {exc.request.url!r}.")
-        logging.error(exc)
-        raise
-    except httpx.TimeoutException as exc:
-        logging.error(f"Request timed out while requesting {exc.request.url!r}.")
-        logging.error(exc)
-        raise
+    # except httpx.RequestError as exc:
+    #     logging.error(f"An error occurred while requesting {exc.request.url!r}.")
+    #     logging.error(exc)
+    #     raise
+    # except httpx.HTTPStatusError as exc:
+    #     logging.error(f"Error response {exc.response.status_code} while requesting {exc.request.url!r}.")
+    #     logging.error(exc)
+    #     raise
+    # except httpx.TimeoutException as exc:
+    #     logging.error(f"Request timed out while requesting {exc.request.url!r}.")
+    #     logging.error(exc)
+    #     raise

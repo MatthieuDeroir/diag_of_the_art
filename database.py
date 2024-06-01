@@ -14,11 +14,19 @@ def init_supabase() -> Client:
     supabase = create_client(url, key)
     return supabase
 
+def fetch_additional_context(supabase: Client, prompt: str) -> str:
+    # Dummy implementation for fetching additional context from Supabase
+    # Replace this with actual Supabase query logic
+    context = "Additional context fetched from Supabase related to the prompt."
+    return context
+
 def fetch_user_info(supabase: Client, user_id: str) -> UserDTO:
-    try :
-        response = supabase.from_("user").select("*").eq("user_id", user_id).execute()
-        if response.error:
-            raise ValueError(f"Error fetching user info: {response.error.message}")
+    try:
+        response = supabase.from_("user").select("*").eq("id", user_id).execute()
+        if response.status_code != 200 or not response.data:
+            raise ValueError(f"Error fetching user info or no data found: {response.error_message}")
+
+        user_data = response.data[0]
         
         return UserDTO(
             user_id=user_data["user_id"],
