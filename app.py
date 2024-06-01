@@ -2,39 +2,36 @@ import streamlit as st
 from utils import initialize_session, display_messages, get_user_input
 from api_client import get_response_from_mistral_stream
 from rag import retrieve_relevant_documents
-from database import init_supabase, fetch_user_info, fetch_additional_context
+from database import init_supabase, fetch_user_info, fetch_additional_context, update_user_info
 import asyncio
 from dotenv import load_dotenv
 import os
 from dto import UserDTO
+from prompt import *
 
 # Load environment variables from .env file
 load_dotenv()
-
-
-# import os
-# from supabase import create_client, Client
-
-# url: str = os.environ.get("SUPABASE_URL")
-# key: str = os.environ.get("SUPABASE_KEY")
-# supabase: Client = create_client(url, key)
-
-# response = supabase.from_("users").select("*").execute()
-
-# print(response)
-
 
 # Initialize Supabase client
 supabase = init_supabase()
 
 user = fetch_user_info(supabase, "1")
 
+user.settings_tone = "nice"
+user.settings_depth = "deep"
+user.settings_format = "paragraph"
 
-mega_prompt = """
-...
-"""
-    
+user.settings_language = "fr"
 
+# onboarding
+user.settings_who_is_concerned = "me"
+user.settings_mood = "happy"
+user.settings_main_subject = "stress"
+
+
+user = update_user_info(supabase, user)
+
+print(user)
 
 # Sidebar
 with st.sidebar:
@@ -44,7 +41,7 @@ with st.sidebar:
     "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
     "[![Open in GitHub Codespaces](https://github.com/codespaces/new/streamlit/llm-examples?quickstart=1)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
     # custom_preprompt = st.text_input("Custom Pre-prompt") or preprompt
-    custom_preprompt = mega_prompt
+    custom_preprompt = "mega_prompt"
 
 
 
@@ -74,7 +71,7 @@ if prompt:
     relevant_docs = retrieve_relevant_documents(prompt)
     
     # Fetch additional context from Supabase
-    additional_context = fetch_additional_context(supabase, prompt)
+    additional_context = mega_prompt
 
     # Combine retrieved documents and additional context into the prompt
     combined_prompt = f"{user.to_string}\n\n{additional_context}\n\n{relevant_docs}\n\n{prompt}"
