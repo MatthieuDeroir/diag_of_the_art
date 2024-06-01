@@ -2,10 +2,12 @@ import streamlit as st
 from utils import initialize_session, display_messages, get_user_input
 from api_client import get_response_from_mistral_stream
 from rag import retrieve_relevant_documents
-from database import init_supabase, fetch_user_info, fetch_additional_context
+from database import init_supabase, fetch_user_info, fetch_additional_context, update_user_info
 import asyncio
 from dotenv import load_dotenv
 import os
+from dto import UserDTO
+from prompt import *
 
 is_log = False
 

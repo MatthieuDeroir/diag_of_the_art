@@ -24,32 +24,44 @@ def fetch_additional_context(supabase: Client, prompt: str) -> str:
 
 
 def fetch_user_info(supabase: Client, user_id: str) -> UserDTO:
-  
     try:
-        response = supabase.table("users").select("*").execute()
+        response = supabase.table("users").select("*").eq("id", user_id).execute()
 
         # Assuming the first item in data list is the user's data
         user_data = response.data[0]
 
         # Map the data from the query to the UserDTO fields
-        return UserDTO(
-            id=str(user_data['id']),
-            login=user_data['login'],
-            email=user_data['email'],
-            first_name=user_data['first_name'],
-            last_name=user_data['last_name'],
-            doctor_name=user_data['doctor_name'],
-            created_at=user_data['created_at'],
-            updated_at=user_data['updated_at'],
-            first_login=user_data['first_login'],
-            diagnosis=user_data['diagnosis'],
-            treatment=user_data['treatment'],
-            notes=user_data['notes'],
-            settings_tone=user_data.get('setting_tone'),  # use .get for optional fields
-            settings_depth=user_data.get('settings_depth'),
-            settings_format=user_data.get('settings_format'),
-            settings_mood=user_data.get('settings_mood'),
-            settings_language=user_data.get('settings_language')
-        )
+        return UserDTO(user_data)
     except Exception as e:
         raise ValueError(f"Error fetching user info: {e}")
+    
+
+def update_user_info(supabase: Client, user: UserDTO) -> bool:
+    try:
+        user_dict = {
+            "id": user.id,
+            "login": user.login,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "doctor_name": user.doctor_name,
+            "created_at": user.created_at,
+            "updated_at": user.updated_at,
+            "first_login": user.first_login,
+            "diagnosis": user.diagnosis,
+            "treatment": user.treatment,
+            "notes": user.notes,
+            "settings_tone": user.settings_tone,
+            "settings_depth": user.settings_depth,
+            "settings_format": user.settings_format,
+            "settings_mood": user.settings_mood,
+            "settings_language": user.settings_language
+        }
+        response = supabase.table("users").upsert(user_dict).execute()
+        return UserDTO(response.data[0])
+    except Exception as e:
+        raise ValueError(f"Error updating user info: {e}")
+
+    
+ 
+
