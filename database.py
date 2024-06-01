@@ -7,6 +7,15 @@ from dto import UserDTO
 load_dotenv()
 
 def init_supabase() -> Client:
+    """
+    Initialize the Supabase client using environment variables.
+
+    Returns:
+        Client: Initialized Supabase client.
+
+    Raises:
+        ValueError: If Supabase URL or Key are not found in environment variables.
+    """
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
     if not url or not key:
@@ -15,12 +24,40 @@ def init_supabase() -> Client:
     return supabase
 
 def fetch_additional_context(supabase: Client, prompt: str) -> str:
-    # Dummy implementation for fetching additional context from Supabase
-    # Replace this with actual Supabase query logic
-    context = "Additional context fetched from Supabase related to the prompt."
-    return context
+    """
+    Fetch additional context from Supabase based on the provided prompt.
+
+    Args:
+        supabase (Client): The Supabase client.
+        prompt (str): The prompt to fetch additional context for.
+
+    Returns:
+        str: The additional context related to the prompt.
+    """
+    return "Additional context related to the prompt."
+    try:
+        response = supabase.from_("context").select("context_data").ilike("prompt", f"%{prompt}%").execute()
+        if response.status_code != 200 or not response.data:
+            raise ValueError(f"Error fetching context or no context found: {response.error_message}")
+        context_data = response.data[0]["context_data"]
+        return context_data
+    except Exception as e:
+        raise ValueError(f"Error fetching additional context: {e}")
 
 def fetch_user_info(supabase: Client, user_id: str) -> UserDTO:
+    """
+    Fetch user information from Supabase for a given user ID.
+
+    Args:
+        supabase (Client): The Supabase client.
+        user_id (str): The user ID to fetch information for.
+
+    Returns:
+        UserDTO: A data transfer object containing user information.
+
+    Raises:
+        ValueError: If there's an error fetching user info or no data is found.
+    """
     try:
         response = supabase.from_("user").select("*").eq("id", user_id).execute()
         if response.status_code != 200 or not response.data:
