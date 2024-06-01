@@ -3,7 +3,7 @@ from typing import Optional
 
 @dataclass
 class UserDTO:
-    user_id: str
+    id: str
     login: str
     email: Optional[str] = None
     first_name: Optional[str] = None
