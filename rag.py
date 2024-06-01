@@ -57,3 +57,4 @@ def retrieve_relevant_documents(query):
     relevant_docs = db.similarity_search(query)
 
     return relevant_docs
+
