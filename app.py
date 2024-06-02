@@ -6,6 +6,7 @@ from database import init_supabase, fetch_user_info, fetch_additional_context
 import asyncio
 from dotenv import load_dotenv
 import os
+from prompt import *
 
 class App:
     def __init__(self):
@@ -65,12 +66,9 @@ class App:
             self.show_unboarding_home()
 
     def show_unboarding_home(self):
-        st.title("Bienvenue Sophie !")
+        st.title(f"Bienvenue {self.user.first_name} !")
         st.image("https://images.prismic.io/merovahealth/8fe1c9f2-79e0-4031-9e5e-57c26ae197f6_merova-rendszer-illustration.png?auto=compress,format", use_column_width=True)
-        st.markdown("""
-        C'est votre première connexion, vous êtes suivie par Dr. Cécile Weber.
-        Vous allez répondre à quelques questions pour créer votre espace personnalisé.
-        """)
+        st.write(f"C'est votre première connexion, vous êtes suivie par Dr. {self.user.doctor_name}. Vous allez répondre à quelques questions pour créer votre espace personnalisé.")
         col1, col2 = st.columns(2)
         with col2:
             if st.button("c'est parti !", key="home_continue"):
@@ -83,9 +81,13 @@ class App:
 
     def show_unboarding_who(self):
         st.title("Ce diagnostic vous concerne ou une personne dans votre entourage ? ")
-        st.markdown("""
-        Qui êtes-vous ? Veuillez répondre aux questions suivantes pour mieux vous connaître.
-        """)
+        st.write("Qui êtes-vous ? Veuillez répondre aux questions suivantes pour mieux vous connaître.")
+        col1form1, col2form = st.columns(2)
+        with col1form1:
+            st.button("Je suis concerné(e) par le diagnostic")
+        with col2form:
+            st.button("Pour un de mes enfants")
+            st.button("Pour un membre de ma famille")
         col1, col2 = st.columns(2)
         with col2:
             if st.button("Suivant", key="home_continue"):
@@ -156,34 +158,39 @@ class App:
         initialize_session()
         display_messages()
         prompt = get_user_input()
+         
         if prompt:
-            if not mistral_api_key:
-                st.info("Please add your Mistral API key to continue.")
-                st.stop()
-            relevant_docs = retrieve_relevant_documents(prompt)
-            additional_context = fetch_additional_context(self.supabase, prompt)
-            combined_prompt = f"{additional_context}\n\n{relevant_docs}\n\n{prompt}"
-            async def response_generator():
-                try:
-                    async for response_chunk in get_response_from_mistral_stream(
-                        mistral_api_key, mistral_api_url, st.session_state.messages, combined_prompt, custom_preprompt
-                    ):
-                        if "choices" in response_chunk:
-                            for choice in response_chunk["choices"]:
-                                chunk_content = choice.get("message", {}).get("content", "")
-                                if chunk_content:
-                                    yield chunk_content
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-            async def run_async_generator():
                 st.session_state.messages.append({"role": "user", "content": prompt})
                 st.chat_message("user").write(prompt)
-                response_content = ""
-                async for chunk in response_generator():
-                    response_content += chunk
-                    st.write(response_content)
+
+                if not mistral_api_key:
+                    st.info("Please add your Mistral API key to continue.")
+                    st.stop()
+
+                # Retrieve relevant documents (RAG)
+                relevant_docs = retrieve_relevant_documents(prompt)
+                
+                # Fetch additional context from Supabase
+                additional_context = fetch_additional_context(self.supabase, prompt)
+
+                # Combine retrieved documents and additional context into the prompt
+                combined_prompt = f"{mega_prompt}\n\n{additional_context}\n\n{relevant_docs}\n\n{prompt}"
+
+                placeholder = st.empty()  # Create an empty placeholder for dynamic updates
+
+                # Run the asynchronous function using Streamlit's asyncio support
+                response_content = asyncio.run(self.run_async_generator(
+                    mistral_api_key, mistral_api_url, st.session_state.messages, combined_prompt, custom_preprompt, placeholder
+                ))
                 st.session_state.messages.append({"role": "assistant", "content": response_content})
-            asyncio.run(run_async_generator())
+
+    async def run_async_generator(self, api_key, api_url, messages, combined_prompt, custom_preprompt, placeholder):
+        response_content = ""
+        async for chunk in get_response_from_mistral_stream(api_key, api_url, messages, combined_prompt, custom_preprompt):
+            response_content += chunk
+            placeholder.write(response_content)  # Update the placeholder with the latest content
+        return response_content
+
 
     def show_dashboard(self):
         st.title(":sunglasses: Dashboard")
