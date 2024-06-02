@@ -6,7 +6,7 @@ from database import init_supabase, fetch_user_info, fetch_additional_context
 import asyncio
 from dotenv import load_dotenv
 import os
-from prompt import mega_prompt, limit
+from prompt import mega_prompt, limit, next_limit
 from streamlit_navigation_bar import st_navbar
 from streamlit_modal import Modal
 
@@ -35,7 +35,7 @@ class App:
     
 
     def run(self):
-        st_navbar(["dialog", "dashboard", "Déconnexion"])
+        st_navbar(["dialog", "dashboard", "déconnexion"])
         # self.show_sidebar()
         self.pages[st.session_state['page']]()
 
@@ -216,7 +216,7 @@ class App:
                 additional_context = fetch_additional_context(self.supabase, prompt)
 
                 # Combine retrieved documents and additional context into the prompt
-                combined_prompt = f"{limit}\n\n{mega_prompt}\n\n{additional_context}\n\n{relevant_docs}\n\n{prompt}"
+                combined_prompt = f"{limit}\n\n{mega_prompt}\n\n{additional_context}\n\n{relevant_docs}\n\n{prompt}\n\n{next_limit}\n\n"
 
                 placeholder = st.empty()  # Create an empty placeholder for dynamic updates
 

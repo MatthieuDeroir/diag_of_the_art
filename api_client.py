@@ -11,7 +11,7 @@ async def get_response_from_mistral_stream(api_key, api_url, messages, prompt, p
     }
     payload = {
         "model": "mistral-large-2402",
-        "messages": messages + [{"role": "user", "content": prompt}],
+        "messages": messages + [{"role": "user", "content": prompt}] + [{"role": "system", "content": preprompt}],
         "stream": True  # Enable streaming
     }
     if preprompt:
