@@ -12,7 +12,7 @@ diagnosis = user.diagnosis
 
 
 mega_prompt = f"""
-Méga-prompt : configuration du back-office : configuration et cadre générale de “Diag Of the Heart” 
+Méga-prompt : configuration du back-office : configuration et cadre général de “dIAlog” 
 
 Objectif : Fine-tuner, Configurer, le système de notre solution dIAlog qui vise à fournir des informations empathiques et détaillés sur le processus d’accompagnement d’un patient atteint d’une maladie sensible. 
 

@@ -22,9 +22,11 @@ diagnosis = user.diagnosis
 
 
 db_exist = False
+all_info = []
 
-def get_definition():
-    global key, embeddings, text_splitter
+def get_definition(info = "Cancer_du_sein"):
+    global key, embeddings, text_splitter, all_info
+
 
     key = os.getenv("MISTRAL_API_KEY")
     embeddings = MistralAIEmbeddings(model="mistral-embed", api_key=key)
@@ -36,38 +38,44 @@ def get_definition():
         length_function=len,
         is_separator_regex=False,
         )
+    fez
+    try:
+        fezf
+        db = FAISS.load_local(f"DB/{info}/faiss_index", embeddings, allow_dangerous_deserialization=True)
 
-def get_info_documents(web = ""):
+    except:
+        web = f"https://fr.wikipedia.org/wiki/{info}"
+        docs = get_info_documents(web)
+        db = FAISS.from_documents(docs, embeddings)
+        db.save_local(f"DB/{info}/faiss_index")
+
+    return db
+
+def get_info_documents(info = "Cancer_du_sein", web = ""):
     """
     Objectif : récupérer les infos sur un ou des sites internet.
     input : site internet (ici web)
     output : vectordb
     """
-    global db_exist, embeddings, text_splitter
+    global embeddings, text_splitter
     loader = WebBaseLoader(web)
     documents = loader.load()
 
     docs = text_splitter.split_documents(documents)
+    print(docs)
     for d in docs:
-        d.page_content = f"Source : Cancer du sein, contenu : {d.page_content}"
+        d.page_content = f"Source : , contenu : {d.page_content}"
     
-    
-    db = FAISS.from_documents(docs, embeddings)
-    db.save_local("faiss_index")
-    db_exist = True
+    return docs
 
 def retrieve_relevant_documents(query):
     # Dummy implementation for retrieving relevant documents
     # Replace this with actual retrieval logic, e.g., using a search engine or document database
     global db_exist
-
-    get_definition()
-
-    if not db_exist:
-        web = "https://fr.wikipedia.org/wiki/Cancer_du_sein"
-        get_info_documents(web)
+    print(user.diagnosis)
+    db = get_definition("Cancer_du_sein")
     
-    db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+    
     relevant_docs = db.similarity_search(query)
 
     return relevant_docs
