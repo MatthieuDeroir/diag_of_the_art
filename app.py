@@ -55,6 +55,7 @@ class App:
             username = st.text_input("Identifiant")
             password = st.text_input("Mot de passe", type="password")
             submit_button = st.form_submit_button("Se connecter")
+            st.write('mot de passe oublié')
         if submit_button:
             self.authenticate(username, password)
 
@@ -68,7 +69,8 @@ class App:
     def show_unboarding_home(self):
         st.title(f"Bienvenue {self.user.first_name} !")
         st.image("https://images.prismic.io/merovahealth/8fe1c9f2-79e0-4031-9e5e-57c26ae197f6_merova-rendszer-illustration.png?auto=compress,format", use_column_width=True)
-        st.write(f"C'est votre première connexion, vous êtes suivie par Dr. {self.user.doctor_name}. Vous allez répondre à quelques questions pour créer votre espace personnalisé.")
+        st.write(f"C'est votre première connexion, vous êtes suivie par Dr. {self.user.doctor_name}.")
+        st.write("Vous allez répondre à quelques questions pour créer votre espace personnalisé.")
         col1, col2 = st.columns(2)
         with col2:
             if st.button("c'est parti !", key="home_continue"):
@@ -84,11 +86,13 @@ class App:
         st.write("Qui êtes-vous ? Veuillez répondre aux questions suivantes pour mieux vous connaître.")
         col1form1, col2form = st.columns(2)
         with col1form1:
-            st.button("Je suis concerné(e) par le diagnostic")
-
+            st.image("https://images.prismic.io/merovahealth/8fe1c9f2-79e0-4031-9e5e-57c26ae197f6_merova-rendszer-illustration.png?auto=compress,format", use_column_width=True)
         with col2form:
+            st.button("Je suis concerné(e) par le diagnostic")
             if st.button("Pour un de mes enfants") : self.user.settings_who = 'enfant'
             if st.button("Pour un membre de ma famille") : self.user.settings_who = 'famille'
+            entourage = st.button("Pour une personne de mon entourage")
+            if entourage : self.user.settings_who = st.text_input("Qui?")
         col1, col2 = st.columns(2)
         with col2:
             if st.button("Suivant", key="home_continue"):
@@ -103,7 +107,7 @@ class App:
 
     def show_unboarding_call(self):
         st.title("Comment souhaitez-vous être appelé ?")
-        self.user.settings_pseudo = st.text_input("Entrer une prénom", key="prenom")
+        self.user.settings_pseudo = st.text_input("Entrer un prénom", self.user.first_name, key="prenom")
         self.user = update_user_info(self.supabase, self.user)
         col1, col2 = st.columns(2)
         with col2:
@@ -118,11 +122,11 @@ class App:
     def show_unboarding_feeling(self):
         st.title("Comment vous sentez-vous aujourd'hui ?")
 
-        if st.button("Je me sens très bien") : self.user.settings_mood = 'Je me sens très bien'
-        if st.button("Plutôt bien") : self.user.settings_mood = 'Plutôt bien'
-        if st.button("Pas mal") : self.user.settings_mood = 'Pas mal'
-        if st.button("Pas très bien") : self.user.settings_mood = 'Pas très bien'
-        if st.button("Je ne me sens pas bien du tout") : self.user.settings_mood = 'Je ne me sens pas bien du tout'
+        if st.button(":grin: Je me sens très bien") : self.user.settings_mood = 'Je me sens très bien'
+        if st.button(":slightly_smiling_face: Plutôt bien") : self.user.settings_mood = 'Plutôt bien'
+        if st.button(":neutral_face: Pas mal") : self.user.settings_mood = 'Pas mal'
+        if st.button(":slightly_frowning_face: Pas très bien") : self.user.settings_mood = 'Pas très bien'
+        if st.button(":weary: Je ne me sens pas bien du tout") : self.user.settings_mood = 'Je ne me sens pas bien du tout'
 
         col1, col2 = st.columns(2)
         with col2:
@@ -171,7 +175,7 @@ class App:
         
         with col2:
             if st.button("Suivant", key="home_continue"):
-                st.session_state['page'] = 'dashboard'
+                st.session_state['page'] = 'chat'
                 st.rerun()
         with col1:
             if st.button("retour", key="home_back"):
