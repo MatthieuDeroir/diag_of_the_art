@@ -175,7 +175,7 @@ class App:
         
         with col2:
             if st.button("Suivant", key="home_continue"):
-                st.session_state['page'] = 'chat'
+                st.session_state['page'] = 'dashboard'
                 st.rerun()
         with col1:
             if st.button("retour", key="home_back"):
@@ -186,7 +186,7 @@ class App:
         mistral_api_key = os.getenv("MISTRAL_API_KEY")
         mistral_api_url = "https://api.mistral.ai/v1/chat/completions"
         custom_preprompt = ""
-        st.title("💬 dIAlog.")
+        st.title("💬 dialog.")
         st.sidebar.write(f"Logged in as: {self.user.login}")
         st.sidebar.write(f"Full Name: {self.user.first_name} {self.user.last_name}")
         st.sidebar.write(f"Email: {self.user.email}")
