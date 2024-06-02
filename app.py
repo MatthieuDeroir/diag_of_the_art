@@ -168,7 +168,8 @@ class App:
                     st.stop()
 
                 # Retrieve relevant documents (RAG)
-                relevant_docs = retrieve_relevant_documents(prompt)
+                # relevant_docs = retrieve_relevant_documents(prompt)
+                relevant_docs = ""
                 
                 # Fetch additional context from Supabase
                 additional_context = fetch_additional_context(self.supabase, prompt)
