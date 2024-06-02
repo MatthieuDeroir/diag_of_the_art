@@ -40,7 +40,7 @@ class App:
         self.pages[st.session_state['page']]()
 
     def authenticate(self, username, password):
-        if username == 'd':
+        if len(username) > 2: #TODO il faut un nom de user plus long que 3 char
             st.session_state['authenticated'] = True
             st.session_state['page'] = 'unboarding'
             st.rerun()
@@ -61,6 +61,7 @@ class App:
             username = st.text_input("Identifiant")
             password = st.text_input("Mot de passe", type="password")
             submit_button = st.form_submit_button("Se connecter")
+            st.write('mot de passe oublié')
         if submit_button:
             self.authenticate(username, password)
 
@@ -74,7 +75,8 @@ class App:
     def show_unboarding_home(self):
         st.title(f"Bienvenue {self.user.first_name} !")
         st.image("https://images.prismic.io/merovahealth/8fe1c9f2-79e0-4031-9e5e-57c26ae197f6_merova-rendszer-illustration.png?auto=compress,format", use_column_width=True)
-        st.write(f"C'est votre première connexion, vous êtes suivie par Dr. {self.user.doctor_name}. Vous allez répondre à quelques questions pour créer votre espace personnalisé.")
+        st.write(f"C'est votre première connexion, vous êtes suivie par Dr. {self.user.doctor_name}.")
+        st.write("Vous allez répondre à quelques questions pour créer votre espace personnalisé.")
         col1, col2 = st.columns(2)
         with col2:
             if st.button("c'est parti !", key="home_continue"):
@@ -90,10 +92,13 @@ class App:
         st.write("Qui êtes-vous ? Veuillez répondre aux questions suivantes pour mieux vous connaître.")
         col1form1, col2form = st.columns(2)
         with col1form1:
-            st.button("Je suis concerné(e) par le diagnostic")
+            st.image("https://images.prismic.io/merovahealth/8fe1c9f2-79e0-4031-9e5e-57c26ae197f6_merova-rendszer-illustration.png?auto=compress,format", use_column_width=True)
         with col2form:
-            st.button("Pour un de mes enfants")
-            st.button("Pour un membre de ma famille")
+            st.button("Je suis concerné(e) par le diagnostic")
+            if st.button("Pour un de mes enfants") : self.user.settings_who = 'enfant'
+            if st.button("Pour un membre de ma famille") : self.user.settings_who = 'famille'
+            entourage = st.button("Pour une personne de mon entourage")
+            if entourage : self.user.settings_who = st.text_input("Qui?")
         col1, col2 = st.columns(2)
         with col2:
             if st.button("Suivant", key="home_continue"):
@@ -104,8 +109,12 @@ class App:
                 st.session_state['page'] = 'unboarding_home'
                 st.rerun()
 
+        self.user = update_user_info(supabase, self.user)
+
     def show_unboarding_call(self):
         st.title("Comment souhaitez-vous être appelé ?")
+        self.user.settings_pseudo = st.text_input("Entrer un prénom", self.user.first_name, key="prenom")
+        self.user = update_user_info(self.supabase, self.user)
         col1, col2 = st.columns(2)
         with col2:
             if st.button("Suivant", key="home_continue"):
@@ -118,6 +127,13 @@ class App:
 
     def show_unboarding_feeling(self):
         st.title("Comment vous sentez-vous aujourd'hui ?")
+
+        if st.button(":grin: Je me sens très bien") : self.user.settings_mood = 'Je me sens très bien'
+        if st.button(":slightly_smiling_face: Plutôt bien") : self.user.settings_mood = 'Plutôt bien'
+        if st.button(":neutral_face: Pas mal") : self.user.settings_mood = 'Pas mal'
+        if st.button(":slightly_frowning_face: Pas très bien") : self.user.settings_mood = 'Pas très bien'
+        if st.button(":weary: Je ne me sens pas bien du tout") : self.user.settings_mood = 'Je ne me sens pas bien du tout'
+
         col1, col2 = st.columns(2)
         with col2:
             if st.button("Suivant", key="home_continue"):
@@ -130,19 +146,39 @@ class App:
 
     def show_unboarding_how(self):
         st.title("Comment souhaiteriez-vous être accompagné(e) suite à votre diagnostic ?")
+
+        souhaits = ""
+
+        # Définir les options disponibles
+        if st.checkbox("Avoir plus d'informations sur ma maladie") : souhaits += "Avoir plus d'informations sur ma maladie, "
+        if st.checkbox("Retrouver des conseils pour adapter mon quotidien") : souhaits += "Retrouver des conseils pour adapter mon quotidien, "
+        if st.checkbox("Maîtriser mon stress et mon anxiété") : souhaits += "Maîtriser mon stress et mon anxiété, "
+        if st.checkbox("Connaître les effets secondaires du traitement") : souhaits += "Connaître les effets secondaires du traitement, "
+            
+            
+        # Ajouter une option pour les autres souhaits
+        autres_souhaits = st.checkbox("Autre(s) souhait(s)")
+        autre_souhait_text = ""
+        if autres_souhaits : souhaits += st.text_input("Entrer un autre souhait")
+
         col1, col2 = st.columns(2)
-        with col2:
-            if st.button("Suivant", key="home_continue"):
-                st.session_state['page'] = 'unboarding_sum'
-                st.rerun()
         with col1:
-            if st.button("retour", key="home_back"):
+            if st.button("retour", key="how_back"):
                 st.session_state['page'] = 'unboarding_feeling'
+                st.rerun()
+        with col2:
+            if st.button("Suivant", key="how_continue"):
+                # Enregistrer les sélections dans le DTO
+                self.user.settings_how = souhaits
+                st.session_state['page'] = 'unboarding_sum'
                 st.rerun()
 
     def show_unboarding_sum(self):
         st.title("Suite à vos réponses au questionnaire, nous comprenons l'importance de ces informations et nous sommes là pour vous accompagner avec le plus grand soin")
         col1, col2 = st.columns(2)
+
+        self.user = update_user_info(self.supabase, self.user)
+        
         with col2:
             if st.button("Suivant", key="home_continue"):
                 st.session_state['page'] = 'dashboard'
@@ -196,7 +232,6 @@ class App:
             response_content += chunk
             placeholder.write(response_content)  # Update the placeholder with the latest content
         return response_content
-
 
     def show_dashboard(self):
         st.title(":sunglasses: Dashboard")
