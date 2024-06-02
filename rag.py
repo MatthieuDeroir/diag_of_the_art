@@ -7,6 +7,20 @@ from langchain_core.documents import Document
 from langchain.chains import create_retrieval_chain
 from langchain_mistralai import MistralAIEmbeddings
 import os
+from database import init_supabase, fetch_user_info
+
+# fetch user diagnosis to compare to website database and retrieve relevant documents
+
+# Initialize Supabase client
+supabase = init_supabase()
+
+# # Fetch user information
+user = fetch_user_info(supabase, "1")
+# user = ""
+
+diagnosis = user.diagnosis
+
+
 db_exist = False
 
 def get_definition():

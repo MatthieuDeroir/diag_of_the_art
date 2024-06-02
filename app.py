@@ -17,19 +17,14 @@ load_dotenv()
 # Initialize Supabase client
 supabase = init_supabase()
 
-# # Fetch user information
+# Fetch user information
 user = fetch_user_info(supabase, "1")
-# user = ""
-
 
 # Page de connexion
-def authenticate(username,password):
-    #TODO Faire un système de verif des ID entrées par le user
-    if username == 'jean paul' : st.session_state['authenticated'] = True
+def authenticate(username, password):
+    if username == 'jean paul':
+        st.session_state['authenticated'] = True
     return True if username == "jean paul" else False
-
-
-
 
 # Sidebar
 def show_sidebar():
@@ -39,8 +34,6 @@ def show_sidebar():
         "[Get a Mistral API key](https://mistral.ai/account/api-keys)"
         "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
         "[![Open in GitHub Codespaces](https://github.com/codespaces/new/streamlit/llm-examples?quickstart=1)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
-        # custom_preprompt = st.text_input("Custom Pre-prompt") or preprompt
-
         
         page = st.sidebar.selectbox("Choisir une page", ["login", "unboarding", "conv", "dashboard", "Déconnexion"])
     if page == "login":
@@ -54,9 +47,7 @@ def show_sidebar():
     elif page == "Déconnexion":
         show_logout()
 
-
 def show_conv():
-    #TODO
     mistral_api_key = os.getenv("MISTRAL_API_KEY")
     mistral_api_url = "https://api.mistral.ai/v1/chat/completions"
     custom_preprompt = ""
@@ -67,8 +58,6 @@ def show_conv():
     st.sidebar.write(f"Full Name: {user.first_name} {user.last_name}")
     st.sidebar.write(f"Email: {user.email}")
     st.sidebar.write(f"Doctor: {user.doctor_name}")
-
-
 
     # Initialize session state
     initialize_session()
@@ -81,6 +70,9 @@ def show_conv():
 
     # Handle user input
     if prompt:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.chat_message("user").write(prompt)
+
         if not mistral_api_key:
             st.info("Please add your Mistral API key to continue.")
             st.stop()
@@ -92,45 +84,29 @@ def show_conv():
         additional_context = fetch_additional_context(supabase, prompt)
 
         # Combine retrieved documents and additional context into the prompt
-        combined_prompt = f"{additional_context}\n\n{relevant_docs}\n\n{prompt}"
+        combined_prompt = f"{mega_prompt}\n\n{additional_context}\n\n{relevant_docs}\n\n{prompt}"
 
-        # Define an async generator function for streaming the response
-        async def response_generator():
-            try:
-                async for response_chunk in get_response_from_mistral_stream(
-                    mistral_api_key, mistral_api_url, st.session_state.messages, combined_prompt, custom_preprompt
-                ):
-                    if "choices" in response_chunk:
-                        for choice in response_chunk["choices"]:
-                            chunk_content = choice.get("message", {}).get("content", "")
-                            if chunk_content:
-                                yield chunk_content
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+        placeholder = st.empty()  # Create an empty placeholder for dynamic updates
 
-        # Function to run the async generator and update the UI
-        async def run_async_generator():
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            st.chat_message("user").write(prompt)
-            
-            response_content = ""
-            async for chunk in response_generator():
-                response_content += chunk
-                st.write(response_content)  # Update the UI with the latest content
-            
-            st.session_state.messages.append({"role": "assistant", "content": response_content})
-        
         # Run the asynchronous function using Streamlit's asyncio support
-        asyncio.run(run_async_generator())
+        response_content = asyncio.run(run_async_generator(
+            mistral_api_key, mistral_api_url, st.session_state.messages, combined_prompt, custom_preprompt, placeholder
+        ))
+        st.session_state.messages.append({"role": "assistant", "content": response_content})
+
+async def run_async_generator(api_key, api_url, messages, combined_prompt, custom_preprompt, placeholder):
+    response_content = ""
+    async for chunk in get_response_from_mistral_stream(api_key, api_url, messages, combined_prompt, custom_preprompt):
+        response_content += chunk
+        placeholder.write(response_content)  # Update the placeholder with the latest content
+    return response_content
 
 def show_unbaording():
     st.title(":rocket: Unboarding")
-    #TODO
     pass
 
 def show_dashboard():
     st.title(":sunglasses: Dashboard")
-    #TODO
     pass
 
 def show_login():
@@ -144,22 +120,14 @@ def show_login():
     if submit_button:
         if authenticate(username, password):
             st.success("Connexion réussie!")
-            main()  # Fonction pour afficher l'application principale après la connexion
+            main()
         else:
             st.error("Identifiant ou mot de passe incorrect")
 
 def show_logout():
     st.title(":cry: Logout")
 
-
 def main():
-    custom_preprompt = "mega_prompt"
-    is_log = False #TODO un truc un poil plus propre i gess
-
-    #sidebar
     show_sidebar()
-    
-    
 
-# Démarer la session    
 main()
