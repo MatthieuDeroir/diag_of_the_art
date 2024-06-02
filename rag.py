@@ -38,14 +38,12 @@ def get_definition(info = "Cancer_du_sein"):
         length_function=len,
         is_separator_regex=False,
         )
-    fez
     try:
-        fezf
         db = FAISS.load_local(f"DB/{info}/faiss_index", embeddings, allow_dangerous_deserialization=True)
 
     except:
         web = f"https://fr.wikipedia.org/wiki/{info}"
-        docs = get_info_documents(web)
+        docs = get_info_documents(info, web)
         db = FAISS.from_documents(docs, embeddings)
         db.save_local(f"DB/{info}/faiss_index")
 
@@ -62,9 +60,9 @@ def get_info_documents(info = "Cancer_du_sein", web = ""):
     documents = loader.load()
 
     docs = text_splitter.split_documents(documents)
-    print(docs)
+    
     for d in docs:
-        d.page_content = f"Source : , contenu : {d.page_content}"
+        d.page_content = f"Source : {d.metadata['title']}, contenu : {d.page_content}"
     
     return docs
 
@@ -76,7 +74,7 @@ def retrieve_relevant_documents(query):
     db = get_definition("Cancer_du_sein")
     
     
-    relevant_docs = db.similarity_search(query)
+    relevant_docs = db.similarity_search(query, k=1)
 
     return relevant_docs
 
