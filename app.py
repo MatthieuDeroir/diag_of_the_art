@@ -6,7 +6,11 @@ from database import init_supabase, fetch_user_info, fetch_additional_context
 import asyncio
 from dotenv import load_dotenv
 import os
-from prompt import *
+from prompt import mega_prompt, limit
+from streamlit_navigation_bar import st_navbar
+from streamlit_modal import Modal
+
+modal = Modal(key="Demo Key",title="test")
 
 class App:
     def __init__(self):
@@ -14,7 +18,7 @@ class App:
         self.supabase = init_supabase()
         self.user = fetch_user_info(self.supabase, "1")
         if 'page' not in st.session_state:
-            st.session_state['page'] = 'login'
+            st.session_state['page'] = 'chat'
         self.pages = {
             "login": self.show_login,
             "unboarding": self.show_unboarding,
@@ -28,9 +32,11 @@ class App:
             "dashboard": self.show_dashboard,
             "Déconnexion": self.show_logout
         }
+    
 
     def run(self):
-        self.show_sidebar()
+        st_navbar(["dialog", "dashboard", "Déconnexion"])
+        # self.show_sidebar()
         self.pages[st.session_state['page']]()
 
     def authenticate(self, username, password):
@@ -150,14 +156,12 @@ class App:
         mistral_api_key = os.getenv("MISTRAL_API_KEY")
         mistral_api_url = "https://api.mistral.ai/v1/chat/completions"
         custom_preprompt = ""
-        st.title("💬 dIAlog.")
-        st.sidebar.write(f"Logged in as: {self.user.login}")
-        st.sidebar.write(f"Full Name: {self.user.first_name} {self.user.last_name}")
-        st.sidebar.write(f"Email: {self.user.email}")
-        st.sidebar.write(f"Doctor: {self.user.doctor_name}")
+        # st.title("💬 dIAlog.")
         initialize_session()
         display_messages()
         prompt = get_user_input()
+    
+
          
         if prompt:
                 st.session_state.messages.append({"role": "user", "content": prompt})
@@ -169,13 +173,14 @@ class App:
 
                 # Retrieve relevant documents (RAG)
                 # relevant_docs = retrieve_relevant_documents(prompt)
+                #TODO: relevant docs RAG must be defined by user info, not by prompt | PERFORMANCE ISSUE
                 relevant_docs = ""
                 
                 # Fetch additional context from Supabase
                 additional_context = fetch_additional_context(self.supabase, prompt)
 
                 # Combine retrieved documents and additional context into the prompt
-                combined_prompt = f"{mega_prompt}\n\n{additional_context}\n\n{relevant_docs}\n\n{prompt}"
+                combined_prompt = f"{limit}\n\n{mega_prompt}\n\n{additional_context}\n\n{relevant_docs}\n\n{prompt}"
 
                 placeholder = st.empty()  # Create an empty placeholder for dynamic updates
 
